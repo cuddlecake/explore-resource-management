@@ -31,7 +31,7 @@ export const routesForModule = (Main: Type<any>, Child: Type<any>) => [
   </main>`,
 })
 export class PickerComponent {
-  readonly routes = ['ngrx-manual', 'ngrx-custom', 'elf'];
+  readonly routes = ['ngrx-manual', 'ngrx-custom', 'elf', 'tanstack-query'];
   constructor() {}
 }
 
@@ -47,6 +47,10 @@ const routes: Routes = [
   {
     path: 'elf',
     loadChildren: () => import('./elf/module').then((i) => i.Module),
+  },
+  {
+    path: 'tanstack-query',
+    loadChildren: () => import('./tanstack-query/module').then((i) => i.Module),
   },
   {
     path: '**',
