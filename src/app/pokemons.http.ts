@@ -15,4 +15,8 @@ export class PokemonsHttp {
       .get<{ results: { name: string; url: string }[] }>(pokemonNavListPath())
       .pipe(map((res) => res.results));
   }
+
+  getPokemonByName(name: string) {
+    return this.http.get<{}>(pokemonPathByName(name));
+  }
 }

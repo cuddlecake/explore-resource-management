@@ -12,7 +12,7 @@ import { RouterModule } from '@angular/router';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 
 @Component({
-  selector: 'pokemon',
+  selector: 'pokemon-image',
   styles: [
     `
       img {

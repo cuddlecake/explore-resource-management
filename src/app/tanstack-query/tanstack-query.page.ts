@@ -1,8 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { injectNameRouteParam } from '../app-routing.module';
-import { QueryService } from './query.service';
+import { injectQuery, injectQuery$, QueryService } from './query.service';
 import { PokemonsHttp } from '../pokemons.http';
-import { map } from 'rxjs';
+import { delay, firstValueFrom, map, takeUntil, timer } from 'rxjs';
 import { PokemonNavItem } from '../pokemon.model';
 
 @Component({
@@ -16,26 +16,47 @@ import { PokemonNavItem } from '../pokemon.model';
     ></pokemon-layout>
   `,
 })
-export class TanstackQueryPage implements OnInit {
+export class TanstackQueryPage {
   constructor(private query: QueryService, private pokemons: PokemonsHttp) {}
 
-  pokemons$ = this.query
-    .query(['pokemons'], this.pokemons.getPokemonsList())
-    .pipe(map((res) => res.data as PokemonNavItem[] | undefined));
+  pokemons$ = injectQuery(['pokemons'], this.pokemons.getPokemonsList()).pipe(
+    map((res) => res.data as PokemonNavItem[] | undefined)
+  );
 
-  pokemonsLoading$ = this.query
-    .query(['pokemons'], this.pokemons.getPokemonsList())
-    .pipe(map((res) => res.isLoading as boolean));
-
-  ngOnInit() {
-    this.pokemons$.subscribe(console.log);
-  }
+  pokemonsLoading$ = injectQuery(
+    ['pokemons'],
+    this.pokemons.getPokemonsList()
+  ).pipe(map((res) => res.isLoading as boolean));
 }
 
 @Component({
   selector: 'tanstack-query-pokemon',
-  template: `tanstack-query-pokemon page works for {{ name$ | async }}`,
+  template: `<ng-container *ngIf="pokemon$ | async as pokemonData">
+    <div *ngIf="pokemonData.status === 'loading'">Loading...</div>
+    <pokemon-image
+      *ngIf="pokemonData.status === 'success'"
+      [pokemon]="$any(pokemonData!.data)"
+    ></pokemon-image
+  ></ng-container>`,
 })
 export class TanstackQueryPokemonPage {
+  constructor(private pokemonsHttp: PokemonsHttp) {}
   name$ = injectNameRouteParam();
+
+  pokemon$ = injectQuery$(
+    this.name$.pipe(
+      map((name) => ({
+        queryKey: ['pokemon', name],
+        staleTime: 5000,
+        refetchOnMount: false,
+        queryFn: () => firstValueFrom(this.pokemonsHttp.getPokemonByName(name)),
+      }))
+    )
+  );
+
+  ngOnInit() {
+    this.pokemon$
+      .pipe(takeUntil(timer(5000)))
+      .subscribe({ complete: () => console.log('complete') });
+  }
 }

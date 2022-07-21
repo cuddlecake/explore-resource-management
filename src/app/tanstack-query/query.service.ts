@@ -1,9 +1,17 @@
 import { inject, Injectable, InjectFlags, InjectionToken } from '@angular/core';
-import { firstValueFrom, Observable } from 'rxjs';
+import {
+  firstValueFrom,
+  map,
+  Observable,
+  shareReplay,
+  switchMap,
+  tap,
+} from 'rxjs';
 import {
   notifyManager,
   QueryClient,
   QueryObserver,
+  QueryObserverOptions,
   QueryObserverResult,
 } from '@tanstack/query-core';
 
@@ -36,4 +44,49 @@ export class QueryService {
       );
     });
   }
+
+  query$<TData = unknown, TError = unknown>(
+    options: Observable<QueryObserverOptions>
+  ): Observable<QueryObserverResult> {
+    let queryObserver: QueryObserver;
+    let firstDone = false;
+    const resultObserver = (optimistic: any) =>
+      new Observable((obs) => {
+        obs.next(optimistic);
+        queryObserver.subscribe(
+          notifyManager.batchCalls(() => {
+            obs.next(queryObserver.getCurrentResult());
+          })
+        );
+      }).pipe(shareReplay({ bufferSize: 1, refCount: true }));
+
+    const opts$ = options.pipe(
+      map((opts) => this.queryClient.defaultQueryOptions(opts)),
+      tap((opts) => {
+        if (!firstDone) {
+          queryObserver ??= new QueryObserver(this.queryClient, opts);
+          firstDone = true;
+        } else {
+          queryObserver!.setOptions(opts, { listeners: false });
+        }
+      }),
+      switchMap((opts) =>
+        resultObserver(queryObserver.getOptimisticResult(opts))
+      )
+    );
+
+    return opts$ as Observable<QueryObserverResult>;
+  }
 }
+
+export const injectQuery: typeof QueryService.prototype.query = (...params) => {
+  const queryService = inject(QueryService);
+  return queryService.query(...params);
+};
+
+export const injectQuery$: typeof QueryService.prototype.query$ = (
+  ...params
+) => {
+  const queryService = inject(QueryService);
+  return queryService.query$(...params);
+};
