@@ -1,8 +1,8 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { injectNameRouteParam } from '../app-routing.module';
 import { injectQuery, injectQuery$, QueryService } from './query.service';
 import { PokemonsHttp } from '../pokemons.http';
-import { delay, firstValueFrom, map, takeUntil, timer } from 'rxjs';
+import { firstValueFrom, map, ReplaySubject } from 'rxjs';
 import { PokemonNavItem } from '../pokemon.model';
 
 @Component({
@@ -31,7 +31,7 @@ export class TanstackQueryPage {
 
 @Component({
   selector: 'tanstack-query-pokemon',
-  template: `<ng-container *ngIf="pokemon$ | async as pokemonData">
+  template: ` <ng-container *ngIf="pokemon$ | async as pokemonData">
     <div *ngIf="pokemonData.status === 'loading'">Loading...</div>
     <pokemon-image
       *ngIf="pokemonData.status === 'success'"
@@ -40,23 +40,16 @@ export class TanstackQueryPage {
   ></ng-container>`,
 })
 export class TanstackQueryPokemonPage {
-  constructor(private pokemonsHttp: PokemonsHttp) {}
   name$ = injectNameRouteParam();
 
+  pokemonsHttp = inject(PokemonsHttp);
   pokemon$ = injectQuery$(
     this.name$.pipe(
       map((name) => ({
         queryKey: ['pokemon', name],
-        staleTime: 5000,
-        refetchOnMount: false,
+        staleTime: Number.MAX_SAFE_INTEGER,
         queryFn: () => firstValueFrom(this.pokemonsHttp.getPokemonByName(name)),
       }))
     )
   );
-
-  ngOnInit() {
-    this.pokemon$
-      .pipe(takeUntil(timer(5000)))
-      .subscribe({ complete: () => console.log('complete') });
-  }
 }

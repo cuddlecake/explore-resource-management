@@ -15,6 +15,12 @@ import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
   selector: 'pokemon-image',
   styles: [
     `
+      :host {
+        width: 100%;
+        height: 100%;
+        display: grid;
+        place-items: center;
+      }
       img {
         filter: drop-shadow(0 0 1.25rem #ccc) drop-shadow(0 0 2.5rem skyblue);
       }
