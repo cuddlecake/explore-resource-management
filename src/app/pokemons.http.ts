@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { map } from 'rxjs';
+import { PokemonNavItem } from './pokemon.model';
 
 const pokemonNavListPath = () => 'https://pokeapi.co/api/v2/pokemon';
 const pokemonPathByName = (name: string) =>
@@ -12,7 +13,7 @@ export class PokemonsHttp {
 
   getPokemonsList() {
     return this.http
-      .get<{ results: { name: string; url: string }[] }>(pokemonNavListPath())
+      .get<{ results: PokemonNavItem[] }>(pokemonNavListPath())
       .pipe(map((res) => res.results));
   }
 

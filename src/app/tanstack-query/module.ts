@@ -7,6 +7,7 @@ import { PokemonModule } from '../pokemon-components';
 import { CommonModule } from '@angular/common';
 import { routesForModule } from '../app-routing.module';
 import { RouterModule } from '@angular/router';
+import { QueryDirective } from './query.directive';
 
 const navComponents = [TanstackQueryPage, TanstackQueryPokemonPage] as const;
 
@@ -19,7 +20,7 @@ const navComponents = [TanstackQueryPage, TanstackQueryPokemonPage] as const;
     ),
     RouterModule.forChild(routesForModule(...navComponents)),
   ],
-  declarations: [...navComponents],
-  exports: [],
+  declarations: [...navComponents, QueryDirective],
+  exports: [QueryDirective],
 })
 export class Module {}
